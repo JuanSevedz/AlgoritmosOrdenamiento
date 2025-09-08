@@ -2,6 +2,8 @@ package terminal;
 
 import model.Benchmark;
 import model.ResultadoExperimento;
+import model.GeneradorData;
+import model.Candidato;
 import util.Exportador;
 
 import java.util.List;
@@ -32,8 +34,10 @@ public class TerminalUI {
                 case 3: exportarResultados(); break;
                 case 4: mostrarInfoEntorno(); break;
                 case 5: 
-                    System.out.println("Hasta chao!");
-                    return;
+                anunciarGanador(); break;
+            case 6:
+                System.out.println("Hasta pronto!");
+                return;
                 default: 
                     System.out.println("Opción no válida. Intente nuevamente.");
             }
@@ -46,7 +50,8 @@ public class TerminalUI {
         System.out.println("2. Ejecutar benchmark");
         System.out.println("3. Exportar resultados");
         System.out.println("4. Mostrar información del entorno");
-        System.out.println("5. Salir");
+        System.out.println("5. Anunciar candidato ganador");
+        System.out.println("6. Salir");
         System.out.print("Seleccione una opción: ");
     }
 
@@ -173,6 +178,53 @@ public class TerminalUI {
         } catch (Exception e) {
             scanner.next();
             return -1;
+        }
+    }
+
+
+    private void anunciarGanador() {
+        // Validar configuración actual
+        if (config == null || !config.validar()) {
+            System.out.println("Error: Parámetros no válidos. Configure los parámetros primero (opción 1).");
+            return;
+        }
+
+        System.out.println("\n=== ANUNCIANDO GANADOR ===");
+        // Generar datos según configuración actual (distribución uniforme por defecto)
+        GeneradorData generador = new GeneradorData(config.getSemilla());
+        Candidato[] candidatos = generador.generarDatosAleatorios(config.getN(), config.getM());
+
+        if (candidatos == null || candidatos.length == 0) {
+            System.out.println("No hay candidatos generados.");
+            return;
+        }
+
+        // Encontrar el candidato con mayor suma de atributos (peor candidato)
+        int sumaMaxima = Integer.MIN_VALUE;
+        Candidato peor = null;
+        for (Candidato c : candidatos) {
+            int suma = 0;
+            // asumiendo 5 atributos
+            for (int i = 0; i < 5; i++) {
+                suma += c.getAtributo(i);
+            }
+            if (suma > sumaMaxima) {
+                sumaMaxima = suma;
+                peor = c;
+            }
+        }
+
+        if (peor != null) {
+            System.out.println("\\n=== GANADOR (Peor candidato) ===");
+            System.out.println("ID: " + peor.getId());
+            System.out.println("Distancia en marchas: " + peor.getAtributo(0));
+            System.out.println("Horas de clase perdidas: " + peor.getAtributo(1));
+            System.out.println("Prebendas sindicales: " + peor.getAtributo(2));
+            System.out.println("Número de políticos sobornados: " + peor.getAtributo(3));
+            System.out.println("Valor total de corrupción: " + peor.getAtributo(4));
+            System.out.println("Suma total de atributos (indicador): " + sumaMaxima);
+        } else {
+            System.out.println("No fue posible determinar un ganador.");
         }
     }
 }
